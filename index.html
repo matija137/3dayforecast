@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vremenska prognoza</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <main>
+      <input
+        type="text"
+        name="pretrazi"
+        id="pretrazi"
+        placeholder="Location..."
+      />
+      <article id="danas"></article>
+      <article id="sutra"></article>
+      <article id="preksutra"></article>
+    </main>
+
+    <script>
+      var odjelci = ["danas", "sutra", "preksutra"];
+      var pretrazi = document.getElementById("pretrazi");
+      var city = "";
+
+      ispisiPoOdjelcimaPoruku("Please enter city name...");
+
+      pretrazi.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          //   console.log("Pritisnuo enter!" + pretrazi.value);
+          if (pretrazi.value.length > 0) {
+            const url = `http://api.openweathermap.org/geo/1.0/direct?q=${pretrazi.value}&limit=1&appid=b2dcf29f595bc8bfeedfb8575f6a0fa7`;
+
+            fetch(url)
+              .then((response) => {
+                if (!response.ok) {
+                  throw new Error(`HTTP error! Status: ${response.status}`);
+                } else {
+                  return response.json();
+                }
+              })
+              .then((data) => {
+                city = data[0].name;
+                const apiURL = `https://api.open-meteo.com/v1/forecast?latitude=${data[0].lat}&longitude=${data[0].lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,windspeed_10m_max&timezone=Europe%2FBerlin&forecast_days=3`;
+
+                return fetch(apiURL);
+              })
+              .then((response) => {
+                if (!response.ok) {
+                  throw new Error(`HTTP error! Status: ${response.status}`);
+                } else {
+                  return response.json();
+                }
+              })
+              .then((data) => {
+                let datumi = data.daily.time;
+                let weathercode = data.daily.weathercode;
+                let maxTemp = data.daily.temperature_2m_max;
+                let minTemp = data.daily.temperature_2m_min;
+                let rain = data.daily.precipitation_sum;
+                let wind = data.daily.windspeed_10m_max;
+
+                for (let index = 0; index < odjelci.length; index++) {
+                  let parent = document.getElementById(odjelci[index]);
+
+                  let icon_path = getIconPathForWeatherCode(weathercode[index]);
+
+                  let html = `<h3>${city}, ${datumi[index]}</h3>
+                        <img src="${icon_path}" alt="weather_icon">
+                        <p><strong>Max. / Min. temp.:</strong><br> ${maxTemp[index]}° / ${minTemp[index]}°</p>
+                        <p><strong>Precip.:</strong><br>${rain[index]} mm</p>
+                        <p><strong>Wind:</strong><br> ${wind[index]} km/h</p>`;
+                  parent.innerHTML = html;
+                }
+              })
+              .catch((error) => {
+                city = pretrazi.value;
+                let message = `<p>Weather is unavailable for city ${city}</p>`;
+                ispisiPoOdjelcimaPoruku(message);
+              });
+          }
+        }
+      });
+
+      function ispisiPoOdjelcimaPoruku(message) {
+        for (let index = 0; index < odjelci.length; index++) {
+          document.getElementById(odjelci[index]).innerHTML = message;
+        }
+      }
+
+      function getIconPathForWeatherCode(code) {
+        let icon_path = "./img/wi-day-sunny.svg";
+
+        switch (code) {
+          case 1:
+          case 2:
+          case 3:
+            icon_path = "./img/wi-day-cloudy.svg";
+            break;
+          case 45:
+          case 48:
+            icon_path = "./img/wi-fog.svg";
+            break;
+
+          case 51:
+          case 53:
+          case 55:
+          case 56:
+          case 57:
+          case 61:
+          case 63:
+          case 65:
+          case 66:
+          case 67:
+          case 80:
+          case 81:
+          case 82:
+            icon_path = "./img/wi-day-rain.svg";
+            break;
+
+          case 85:
+          case 86:
+            icon_path = "./img/wi-snow.svg";
+            break;
+
+          case 95:
+          case 96:
+          case 99:
+            icon_path = "./img/wi-day-thunderstorm.svg";
+            break;
+
+          default:
+            icon_path = "./img/wi-day-sunny.svg";
+            break;
+        }
+
+        return icon_path;
+      }
+    </script>
+  </body>
+</html>
