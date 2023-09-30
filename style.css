@@ -45,6 +45,7 @@ article {
 
   text-align: center;
   background-color: var(--floral-white);
+  opacity: 0;
 }
 
 img {

@@ -11,6 +11,12 @@
       href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap"
       rel="stylesheet"
     />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"
+      integrity="sha512-z4OUqw38qNLpn1libAN9BsoDx6nbNFio5lA6CuTp9NlK83b89hgyCVq+N5FdBJptINztxn1Z3SaKSKUS5UP60Q=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
   </head>
   <body>
     <main>
@@ -29,14 +35,24 @@
       var odjelci = ["danas", "sutra", "preksutra"];
       var pretrazi = document.getElementById("pretrazi");
       var city = "";
+      var previousInput = "";
+      var prviPut = true;
+      // replace this revoked key with your appid key
+      var aapid = "b2dcf29f595bc8bfeedfb8575f6a0fa7";
 
       ispisiPoOdjelcimaPoruku("Please enter city name...");
 
       pretrazi.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
           //   console.log("Pritisnuo enter!" + pretrazi.value);
-          if (pretrazi.value.length > 0) {
-            const url = `http://api.openweathermap.org/geo/1.0/direct?q=${pretrazi.value}&limit=1&appid=b2dcf29f595bc8bfeedfb8575f6a0fa7`;
+          if (pretrazi.value.length > 0 && previousInput !== pretrazi.value) {
+            previousInput = pretrazi.value;
+
+            if (document.getElementById(odjelci[0]).style.opacity == 1) {
+              hideCards();
+            }
+
+            const url = `http://api.openweathermap.org/geo/1.0/direct?q=${pretrazi.value}&limit=1&appid=${aapid}`;
 
             fetch(url)
               .then((response) => {
@@ -85,9 +101,40 @@
                 let message = `<p>Weather is unavailable for city ${city}</p>`;
                 ispisiPoOdjelcimaPoruku(message);
               });
+
+            if (prviPut) {
+              showCards();
+              prviPut = false;
+            } else {
+              setTimeout(() => {
+                showCards();
+              }, 1000);
+            }
           }
         }
       });
+
+      function showCards() {
+        anime({
+          targets: "article",
+          translateX: [-250, 0],
+          // endDelay: 1000,
+          direction: "normal",
+          opacity: 1,
+          delay: anime.stagger(200, { from: "first" }),
+        });
+      }
+
+      function hideCards() {
+        anime({
+          targets: "article",
+          translateX: [0, 250],
+          // endDelay: 1000,
+          direction: "normal",
+          opacity: 0,
+          delay: anime.stagger(200, { from: "first" }),
+        });
+      }
 
       function ispisiPoOdjelcimaPoruku(message) {
         for (let index = 0; index < odjelci.length; index++) {
